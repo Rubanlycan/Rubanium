@@ -21,13 +21,20 @@ import gradio as gr
 import imageio_ffmpeg
 import torch
 from PIL import Image
+from settings import configured_path, load_project_env
 
 
 APP_DIR = Path(__file__).resolve().parent
-OUTPUT_DIR = APP_DIR / "outputs"
-OUTPUT_DIR.mkdir(exist_ok=True)
+load_project_env(APP_DIR / ".env")
 
-MODELS_DIR = Path(os.environ.get("RUBANIUM_MODELS_DIR", r"D:\models"))
+
+MODELS_DIR = configured_path("RUBANIUM_MODELS_DIR", Path("models"), APP_DIR)
+OFFLOAD_ROOT = configured_path("RUBANIUM_OFFLOAD_DIR", Path("offload"), APP_DIR)
+OUTPUT_DIR = configured_path("RUBANIUM_OUTPUT_DIR", Path("outputs"), APP_DIR)
+LOG_DIR = configured_path("RUBANIUM_LOG_DIR", Path(".runtime") / "logs", APP_DIR)
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
 MODEL_PATHS = {
     "LTX-Video 2B (recommended for 8 GB VRAM)": MODELS_DIR / "ltx-video-2b" / "components",
     "Wan 2.2 TI2V-5B": MODELS_DIR / "wan2.2-ti2v-5b-diffusers",
@@ -35,9 +42,11 @@ MODEL_PATHS = {
 DEFAULT_MODEL = "LTX-Video 2B (recommended for 8 GB VRAM)"
 LTX_LABEL = "LTX-Video 2B v0.9.5"
 WAN_LABEL = "Wan 2.2 TI2V-5B"
-OFFLOAD_ROOT = Path(os.environ.get("RUBANIUM_OFFLOAD_DIR", str(APP_DIR / "offload")))
 OFFLOAD_DIR = OFFLOAD_ROOT / f"session-{os.getpid()}-{uuid.uuid4().hex[:8]}"
 OFFLOAD_MIN_FREE_GIB = 45
+SERVER_NAME = os.environ.get("RUBANIUM_SERVER_NAME", "127.0.0.1")
+SERVER_PORT = int(os.environ.get("RUBANIUM_SERVER_PORT", "7860"))
+SHARE_APP = os.environ.get("RUBANIUM_SHARE", "false").strip().lower() in {"1", "true", "yes", "on"}
 
 DEFAULT_NEGATIVE = "worst quality, inconsistent motion, blurry, jittery, distorted, watermark, logo, subtitles"
 DEFAULT_PROMPT = (
@@ -211,7 +220,7 @@ def model_download_metrics(model_name: str) -> tuple[int, float, bool]:
         except Exception:
             pass
 
-    pid_marker = APP_DIR / "logs" / marker_name
+    pid_marker = LOG_DIR / marker_name
     try:
         pid = int(pid_marker.read_text(encoding="ascii").strip())
         os.kill(pid, 0)
@@ -317,8 +326,8 @@ def start_model_download(model_name: str):
     if active:
         return model_download_status_html(model_name), download_button_update(model_name)
 
-    log_dir = APP_DIR / "logs"
-    log_dir.mkdir(exist_ok=True)
+    log_dir = LOG_DIR
+    log_dir.mkdir(parents=True, exist_ok=True)
     slug = "wan" if is_wan else "ltx"
     stdout_path = log_dir / f"{slug}-download.stdout.log"
     marker_path = log_dir / f"{slug}-download.pid"
@@ -1044,9 +1053,9 @@ with gr.Blocks(title="Wan 2.2 Motion Studio") as demo:
 
 if __name__ == "__main__":
     demo.queue(max_size=1).launch(
-        server_name="127.0.0.1",
-        server_port=7860,
-        share=False,
+        server_name=SERVER_NAME,
+        server_port=SERVER_PORT,
+        share=SHARE_APP,
         inbrowser=True,
         theme=gr.themes.Soft(primary_hue="cyan", neutral_hue="slate"),
         css=CSS,

@@ -1,0 +1,29 @@
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+
+# Python environments and bytecode
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+
+# Downloaded models, temporary weights, generated output, and runtime logs
+/models/
+/offload/
+/outputs/
+/logs/
+/.runtime/
+**/.cache/
+.cache/
+*.safetensors
+*.incomplete
+*.mp4
+*.partial
+
+# Local editor and operating system files
+.DS_Store
+Thumbs.db
+.vscode/

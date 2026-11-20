@@ -1,34 +1,60 @@
 # Motion Studio
 
-Local video generation with a dropdown for **LTX-Video 2B** and **Wan 2.2 TI2V-5B**. LTX-Video 2B is the default recommendation for this RTX 4060 Laptop GPU with 8 GiB VRAM. The Wan 2.2 checkpoint is still downloading into `D:\models\wan2.2-ti2v-5b-diffusers`; the selector will report when it is ready.
+Motion Studio is a local Gradio app for text-to-video and image-to-video generation with **LTX-Video 2B** or **Wan 2.2 TI2V-5B**. Models run on the user's own machine; this app does not send prompts to a hosted inference API.
 
-## Video controls
+## Requirements
 
-- Choose a 10–30 second clip. The app generates two-second sections and carries the last frame between sections to reduce peak memory and keep motion continuity. Frames stream to FFmpeg as each section completes.
-- Choose 480p (832×480) or 720p (1280×704 model-native output).
-- Start with LTX-Video 2B, 480p, and 4 inference steps. Higher resolution, longer duration, and more steps increase runtime and memory use. Wan's official single-GPU setup recommends 24 GiB VRAM; this PC has 8 GiB, so Wan and especially 720p can still run out of memory.
-- Low-memory loading stages the LTX text encoder to disk, streams transformer blocks with CUDA, and tiles the LTX decoder. Wan uses device-map CPU/disk offload. CUDA SDPA and TF32 are enabled where supported.
-- Clips are encoded at 24 fps. Long clips can take a long time on this GPU; offload reduces peak weight memory at the cost of transfer speed.
+- Windows 10 or newer.
+- Python supported by the installed PyTorch release. See [PyTorch's Windows install guide](https://pytorch.org/get-started/locally/).
+- An NVIDIA GPU with a CUDA-enabled PyTorch build. The app requires CUDA for generation; CPU and disk offloading reduce peak VRAM use but do not provide CPU-only generation.
+- Internet access for the first model download.
+- Free disk space for model files and temporary offload data. LTX-Video is approximately 25.6 GB; Wan 2.2 is approximately 34.2 GB. The downloader checks for 35 GiB free for LTX and 45 GiB for Wan.
 
-## Install and run
+LTX-Video 2B is the recommended starting point for lower-VRAM systems. Results and performance depend on GPU memory, system RAM, disk speed, clip length, resolution, and inference steps.
+
+## Install
+
+Clone or download this repository, then open PowerShell in the project directory:
 
 ```powershell
-python -m venv venv
-venv\Scripts\Activate.ps1
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-pip install -r requirements.txt
-python download_models.py
+```
+
+Install a CUDA-enabled PyTorch and TorchVision build using the command for your GPU driver from the [official PyTorch selector](https://pytorch.org/get-started/locally/). Then install the remaining project requirements:
+
+```powershell
+python -m pip install -r requirements.txt
+Copy-Item .env.example .env
+```
+
+Edit `.env` if you want to change model, offload, output, or server paths. Keep `.env` private; it is ignored by Git.
+
+## Download models and run
+
+Start the app:
+
+```powershell
 python app.py
 ```
 
-Open <http://127.0.0.1:7860>. LTX files should be in `D:\models\ltx-video-2b\components`. Generated MP4 files are saved under `outputs/`.
+Open <http://127.0.0.1:7860>, open the model picker, and use the download button for the model you want. Downloads can also be started from PowerShell:
 
-If you put Wan or LTX in another model directory, pass its parent directory to the downloader where applicable and set `RUBANIUM_MODELS_DIR` before starting the app.
+```powershell
+python download_models.py --model ltx
+python download_models.py --model wan
+```
 
-## Named image references
+The default paths are `models/`, `offload/`, and `outputs/` under the project directory. Model weights, generated videos, logs, offload data, virtual environments, and `.env` files are excluded from Git. Set `RUBANIUM_MODELS_DIR`, `RUBANIUM_OFFLOAD_DIR`, and `RUBANIUM_OUTPUT_DIR` in `.env` to store them elsewhere.
 
-Upload up to six images and mention their filename tags, such as `@bunny`, in the prompt. LTX uses the selected images as conditioning; Wan combines them into a starting reference board. For Wan, the carried ending frame conditions each following two-second section.
+The app binds to `127.0.0.1` and does not create a public share link by default. Do not expose it to a network without adding suitable authentication and access controls.
 
-## Practical limits
+## Features and limits
 
-Generation is local and has no API token quota. Memory, speed, free disk space, model constraints, and the chosen duration/resolution are the practical limits. The app does not include an NSFW filter; follow the model license and applicable law.
+- 10–30 second clips at 480p or 720p.
+- Up to six image references, selected in prompts using filename tags such as `@bunny`.
+- Local MP4 output saved in the configured output directory.
+- No API token quota. Generation is limited by hardware, disk space, model constraints, and time.
+
+See the model pages for their usage terms and limitations: [LTX-Video](https://huggingface.co/Lightricks/LTX-Video-0.9.5) and [Wan 2.2 TI2V-5B](https://huggingface.co/Wan-AI/Wan2.2-TI2V-5B-Diffusers). This repository does not currently include a separate license for the application source code.

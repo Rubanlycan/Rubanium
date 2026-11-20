@@ -1,4 +1,4 @@
-"""Download a supported local video model into D:\\models."""
+"""Download a supported video model into the configured local model directory."""
 
 from __future__ import annotations
 
@@ -7,6 +7,11 @@ import os
 import shutil
 import time
 from pathlib import Path
+from settings import configured_path, load_project_env
+
+APP_DIR = Path(__file__).resolve().parent
+load_project_env(APP_DIR / ".env")
+DEFAULT_MODELS_DIR = configured_path("RUBANIUM_MODELS_DIR", Path("models"), APP_DIR)
 
 # The Xet transfer helper can stall on some Windows networks. Keep the normal
 # Hugging Face HTTP resume path, which is easier to retry across restarts.
@@ -53,8 +58,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--models-dir",
-        default=r"D:\models",
-        help="Directory for local model files (default: D:\\models)",
+        default=str(DEFAULT_MODELS_DIR),
+        help=f"Directory for model files (default: {DEFAULT_MODELS_DIR})",
     )
     parser.add_argument("--model", choices=MODEL_CONFIGS, default="wan")
     args = parser.parse_args()
