@@ -1,6 +1,6 @@
-# Motion Studio
+# Rubanium
 
-Motion Studio is a local Gradio app for text-to-video and image-to-video generation with **LTX-Video 2B** or **Wan 2.2 TI2V-5B**. Models run on the user's own machine; this app does not send prompts to a hosted inference API.
+Rubanium is a local Gradio app for text-to-video and image-to-video generation with **LTX-Video 2B** or **Wan 2.2 TI2V-5B**. Models run on the user's own machine; this app does not send prompts to a hosted inference API.
 
 ## Requirements
 

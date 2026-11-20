@@ -930,11 +930,11 @@ footer { display: none !important; }
   .resource-chip { gap: 8px; padding: 7px 9px; font-size: .7rem; } }
 """
 
-with gr.Blocks(title="Wan 2.2 Motion Studio") as demo:
+with gr.Blocks(title="Rubanium") as demo:
     gr.HTML(
         """
         <div id="hero">
-          <h1>Motion Studio</h1>
+          <h1>Rubanium</h1>
           <p>Choose a local model, set a 10-30 second duration, and generate from text or image references.</p>
         </div>
         """
